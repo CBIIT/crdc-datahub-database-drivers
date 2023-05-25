@@ -30,9 +30,9 @@ class DatabaseConnector {
         }
     }
 
-    static createMongoStore(connectionString, sessionTimeout) {
+    createMongoStore(sessionTimeout) {
         return MongoStore.create({
-            mongoUrl: connectionString,
+            mongoUrl: this.connectionString,
             touchAfter: sessionTimeout // time period in seconds
         })
     }
