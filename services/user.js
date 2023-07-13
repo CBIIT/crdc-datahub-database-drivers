@@ -61,6 +61,58 @@ class User {
         }
         return user
     }
+
+    async updateMyUser(params, context) {
+        
+        if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error("A user must be logged in to call this API");
+        let session_currentTime = getCurrentTimeYYYYMMDDSS();
+        let user = await this.userCollection.find(context.userInfo._id);
+        if (!user || !Array.isArray(user) || user.length < 1) 
+            throw new Error("User is not in the database")
+        let update_result 
+
+        // verifried
+        if (!context.userInfo._id) {
+            let error = "there is no UserId in the session";
+            console.error(error)
+            throw new Error(error)
+        }
+
+
+        const target_obj ={
+            _id: context.userInfo._id,
+            firstName: params.userInfo.firstName,
+            lastName: params.userInfo.lastName,
+            updateAt: session_currentTime
+        }
+
+        update_result = await this.userCollection.update(target_obj);
+
+        // error handling
+        if (update_result.matchedCount < 1) {
+            let error = "there is an error getting the result";
+            console.error(error)
+            throw new Error(error)
+        }
+        
+
+        context.userInfo = {
+            ...context.userInfo,
+            ...target_obj,
+            updateAt: session_currentTime
+
+        }
+        user = {
+            ...user[0],
+            firstName: params.userInfo.firstName,
+            lastName: params.userInfo.lastName,
+            updateAt: session_currentTime
+        }
+
+        return user
+
+    }
+
 }
 
 
