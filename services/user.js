@@ -1,5 +1,6 @@
 const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
 const {v4} = require("uuid")
+const {USER} = require("../constants/user-constants");
 const {createToken, getAccessToken, verifyToken, decodeToken} = require("./tokenizer");
 
 
@@ -40,8 +41,8 @@ class User {
                 _id: v4(),
                 email: context.userInfo.email,
                 IDP: context.userInfo.IDP,
-                userStatus: "Active",
-                role: "User",
+                userStatus: USER.STATUSES.ACTIVE,
+                role: USER.ROLES.USER,
                 organizations: [],
                 firstName: context.userInfo.firstName,
                 lastName: context.userInfo.lastName,
@@ -114,11 +115,7 @@ class User {
 
     }
 
-    isValidOrThrow(conditions){
-        conditions.forEach((condition) => {
-            if (!condition.isValid()) condition.throwError();
-        });
-    }
+}
 
 
     async grantToken(params, context){
