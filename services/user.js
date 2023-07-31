@@ -1,5 +1,7 @@
 const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
 const {v4} = require("uuid")
+const {createToken, getAccessToken, verifyToken, decodeToken} = require("./tokenizer");
+
 
 class User {
     constructor(userCollection) {
@@ -64,7 +66,6 @@ class User {
 
     async updateMyUser(params, context) {
         
-        if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error("A user must be logged in to call this API");
         let session_currentTime = getCurrentTimeYYYYMMDDSS();
         let user = await this.userCollection.find(context.userInfo._id);
         if (!user || !Array.isArray(user) || user.length < 1) 
@@ -113,7 +114,41 @@ class User {
 
     }
 
+    isValidOrThrow(conditions){
+        conditions.forEach((condition) => {
+            if (!condition.isValid()) condition.throwError();
+        });
+    }
+
+
+    async grantToken(params, context){
+        const userInfo = context.userInfo;
+        this.isValidOrThrow([
+            new LoginCondition(userInfo.email, userInfo.IDP)
+        ]);
+        const uuid = v4();
+        const accessToken = createToken({...userInfo, uuid}, config.token_secret, config.token_timeout);
+        const aUser = await this.dataService.linkTokenToUser({uuid, expiration: this.epochLogTime()}, userInfo);
+        return {
+            token: [accessToken],
+            message: 'This token can only be viewed once and will be lost if it is not saved by the user'
+        }
+    }
+    
+    async linkTokenToUser(params, context){
+        let session_currentTime = getCurrentTimeYYYYMMDDSS();
+
+        const target_obj ={
+            _id: context.userInfo._id,
+            token: params,
+            updateAt: session_currentTime
+        }
+
+        update_result = await this.userCollection.update(target_obj);
+        
+    }
 }
+
 
 
 module.exports = {
