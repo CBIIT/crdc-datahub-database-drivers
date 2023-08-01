@@ -115,7 +115,7 @@ class User {
 
     }
 
-}
+
 
 
     async grantToken(params, context){
