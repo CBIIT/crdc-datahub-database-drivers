@@ -3,7 +3,6 @@ const {v4} = require("uuid")
 const {USER} = require("../constants/user-constants");
 const {createToken, getAccessToken, verifyToken, decodeToken} = require("./tokenizer");
 
-
 class User {
     constructor(userCollection) {
         this.userCollection = userCollection
@@ -116,8 +115,6 @@ class User {
     }
 
 
-
-
     async grantToken(params, context){
         const userInfo = context.userInfo;
         this.isValidOrThrow([
@@ -143,6 +140,10 @@ class User {
 
         update_result = await this.userCollection.update(target_obj);
         
+    }
+  
+    isAdmin(role) {
+        return role && role === USER.ROLES.ADMIN;
     }
 }
 
