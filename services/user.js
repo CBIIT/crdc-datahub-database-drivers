@@ -115,6 +115,14 @@ class User {
 
     }
 
+    async getAdminUserEmails() {
+        const orgOwnerOrAdminRole = {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "$or": [{"role": USER.ROLES.ADMIN}, {"role": USER.ROLES.ORG_OWNER}]
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwnerOrAdminRole}]) || [];
+    }
+
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
     }
