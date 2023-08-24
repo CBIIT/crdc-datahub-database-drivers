@@ -13,8 +13,7 @@ function createSession(sessionSecret, sessionTimeout, connectionString) {
             collectionName: SESSION_COLLECTION,
             dbName: DATABASE_NAME,
             touchAfter: sessionTimeout // time period in seconds
-        }),
-        cookie: {maxAge: sessionTimeout}
+        })
     });
 }
 
