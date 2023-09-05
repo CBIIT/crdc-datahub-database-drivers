@@ -1,12 +1,7 @@
 const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
 const {v4} = require("uuid")
 const {USER} = require("../constants/user-constants");
-const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
-
-const isLoggedInOrThrow = (context) => {
-    if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
-}
 
 class User {
     constructor(userCollection, logCollection) {
@@ -15,17 +10,6 @@ class User {
     }
 
     async getUser(params, context) {
-        isLoggedInOrThrow(context);
-        if (!params?.userID) {
-            throw new Error(ERROR.INVALID_USERID);
-        };
-        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
-            throw new Error(ERROR.INVALID_ROLE);
-        };
-        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
-            throw new Error(ERROR.NO_ORG_ASSIGNED);
-        }
-
         const filters = { _id: params.userID };
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
             filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
@@ -40,14 +24,6 @@ class User {
 
 
     async listUsers(params, context) {
-        isLoggedInOrThrow(context);
-        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo?.role !== USER.ROLES.ORG_OWNER) {
-            throw new Error(ERROR.INVALID_ROLE);
-        };
-        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
-            throw new Error(ERROR.NO_ORG_ASSIGNED);
-        }
-
         const filters = {};
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
             filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
@@ -90,7 +66,6 @@ class User {
     }
 
     async getMyUser(params, context) {
-        isLoggedInOrThrow(context);
         let result = await this.userCollection.aggregate([
             {
                 "$match": {
@@ -118,7 +93,6 @@ class User {
     }
 
     async updateMyUser(params, context) {
-        isLoggedInOrThrow(context);
         let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
         let user = await this.userCollection.find(context.userInfo._id);
         if (!user || !Array.isArray(user) || user.length < 1) throw new Error("User is not in the database")
