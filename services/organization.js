@@ -1,6 +1,3 @@
-const {ERROR} = require("../constants/error-constants");
-const {USER} = require("../constants/user-constants");
-
 class Organization {
   constructor(organizationCollection) {
       this.organizationCollection = organizationCollection;
