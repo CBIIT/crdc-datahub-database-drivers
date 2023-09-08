@@ -131,6 +131,7 @@ class User {
 
     async getMyUser(params, context) {
         isLoggedInOrThrow(context);
+        isValidUserStatus(context?.userInfo?.userStatus);
         let result = await this.userCollection.aggregate([
             {
                 "$match": {
@@ -206,6 +207,7 @@ class User {
 
     async editUser(params, context) {
         isLoggedInOrThrow(context);
+        isValidUserStatus(context?.userInfo?.userStatus);
         if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
             throw new Error(ERROR.INVALID_ROLE);
         }
