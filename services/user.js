@@ -15,6 +15,19 @@ const isValidUserStatus = (userStatus) => {
     if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
 }
 
+const isActiveUserByEmailAndIDP = async(userCollection, email, idp)=> {
+    const pipeline = [
+        {$match: {email: email,IDP: idp}},
+        {$limit: 1},
+        {$project: {_id: 0,userStatus: 1}}
+    ];
+    const aUser = await userCollection.aggregate(pipeline);
+    // if a user exists, check user is inactive
+    if (aUser?.length > 0) {
+        isValidUserStatus(aUser[0]?.userStatus);
+    }
+}
+
 class User {
     constructor(userCollection, logCollection, organizationService) {
         this.userCollection = userCollection;
@@ -131,6 +144,7 @@ class User {
 
     async getMyUser(params, context) {
         isLoggedInOrThrow(context);
+        await isActiveUserByEmailAndIDP(this.userCollection, context.userInfo.email, context.userInfo.IDP);
         let result = await this.userCollection.aggregate([
             {
                 "$match": {
