@@ -116,7 +116,7 @@ class User {
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
-                role: "Admin"
+                role: USER.ROLES.ADMIN
             }
         }]);
         return result;
