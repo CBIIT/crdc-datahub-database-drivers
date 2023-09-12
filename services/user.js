@@ -144,7 +144,9 @@ class User {
 
     async getMyUser(params, context) {
         isLoggedInOrThrow(context);
-        await isActiveUserByEmailAndIDP(this.userCollection, context.userInfo.email, context.userInfo.IDP);
+        if (!context.userInfo.userStatus) {
+            await isActiveUserByEmailAndIDP(this.userCollection, context.userInfo.email, context.userInfo.IDP);
+        }
         let result = await this.userCollection.aggregate([
             {
                 "$match": {
