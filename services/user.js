@@ -5,6 +5,7 @@ const {UpdateProfileEvent} = require("../domain/log-events");
 const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
 const {v4} = require("uuid");
+const {createToken} = require("../services/tokenizer");
 
 
 const isLoggedInOrThrow = (context) => {
@@ -17,10 +18,11 @@ const isValidUserStatus = (userStatus) => {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationService) {
+    constructor(userCollection, logCollection, organizationService,config) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationService = organizationService;
+        this.config = config;
     }
 
     // Note: This is a wrapper for the OrgService version which returns OrgInfo instead of Organization
@@ -379,6 +381,44 @@ class User {
 
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
+    }
+    /**
+     * getOrgOwnerByOrgName
+     * @param {*} orgName 
+     * @returns user[]
+     */
+    async getOrgOwnerByOrgName(orgName) {
+
+        const orgOwner= {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "role": USER.ROLES.ORG_OWNER,
+            "organization.orgName": orgName
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwner}]) || [];
+    }
+
+    isValidOrThrow(conditions){
+        conditions.forEach((condition) => {
+            if (!condition) throw new Error("Both email and IDP are required!")
+        });
+    }
+
+    epochLogTime() {
+        const logTime = addSeconds(getTimeNow(), config.token_timeout).toString();
+        return Date.parse(logTime);
+    }
+
+    async grantToken (_, context){
+        const userInfo = context.userInfo;
+        //console.debug(userInfo, "User Info");
+        this.isValidOrThrow([userInfo.email, userInfo.IDP]);
+        const uuid = v4();
+        const accessToken = createToken({...userInfo, uuid}, this.config.token_secret, this.config.token_timeout);
+        //console.debug(accessToken, "Token");
+        return {
+            tokens: [accessToken],
+            message: 'This token can only be viewed once and will be lost if it is not saved by the user'
+        }
     }
 }
 
