@@ -22,5 +22,7 @@ module.exports = Object.freeze({
             LOGIN_GOV: "Login.gov"
         }
     },
-    NOT_APPLICABLE: "Not Applicable"
+    NOT_APPLICABLE: "Not Applicable", 
+    API_TOKEN: 'api-token',
+    API_TOKEN_MSG: 'This token can only be viewed once and will be lost if it is not saved by the user'
 });

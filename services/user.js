@@ -1,4 +1,4 @@
-const {USER} = require("../constants/user-constants");
+const {USER, API_TOKEN, API_TOKEN_MSG} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
@@ -399,7 +399,7 @@ class User {
 
     isValidOrThrow(conditions){
         conditions.forEach((condition) => {
-            if (!condition) throw new Error("Both email and IDP are required!")
+            if (!condition) throw new Error(ERROR.NOT_LOGGED_IN);
         });
     }
 
@@ -417,7 +417,7 @@ class User {
         //console.debug(accessToken, "Token");
         return {
             tokens: [accessToken],
-            message: 'This token can only be viewed once and will be lost if it is not saved by the user'
+            message: API_TOKEN_MSG
         }
     }
 }
