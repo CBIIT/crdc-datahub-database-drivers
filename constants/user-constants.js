@@ -7,10 +7,7 @@ module.exports = Object.freeze({
             FEDERAL_LEAD: "Federal Lead",
             DC_POC: "Data Commons POC",
             ORG_OWNER: "Organization Owner",
-            SUBMITTER: "Submitter",
-            //The below roles are not yet used
-            DC_OWNER: "DC_OWNER",
-            CONCIERGE: "Concierge",
+            SUBMITTER: "Submitter"
         },
         STATUSES: {
             ACTIVE: "Active",

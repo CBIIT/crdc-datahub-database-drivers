@@ -32,6 +32,19 @@ class MongoDBCollection {
         }
     }
 
+
+    async findOneAndUpdate(query, doc) {
+        const updateDoc = {
+            $set: doc
+        };
+        try{
+            return await this.collection.findOneAndUpdate(query, updateDoc, { upsert: true});
+        }
+        catch (e){
+            logAndThrow("An exception occurred during an findOne and update operation", e);
+        }
+    }
+
     async update(application, option) {
         const filter = {
             _id: application._id

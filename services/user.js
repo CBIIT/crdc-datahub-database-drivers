@@ -121,11 +121,31 @@ class User {
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
-                role: "Admin"
+                role: USER.ROLES.ADMIN
             }
         }]);
         return result;
 
+    }
+
+    async getConcierge(orgID) {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                "organization.orgID": orgID,
+                role: USER.ROLES.CURATOR
+            }
+        }]);
+        return result;
+    }
+
+    async getOrgOwner(orgID) {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                "organization.orgID": orgID,
+                role: USER.ROLES.ORG_OWNER
+            }
+        }]);
+        return result;
     }
 
     async createNewUser(context) {
@@ -244,7 +264,7 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
-        if (!params.organization && [USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
+        if (!params.organization && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
         if (params.organization && params.organization !== user[0]?.organization?.orgID) {

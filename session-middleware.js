@@ -5,7 +5,7 @@ const MongoStore = require("connect-mongo");
 function createSession(sessionSecret, sessionTimeout, connectionString) {
     return session({
         secret: sessionSecret,
-        // rolling: true,
+        rolling: true,
         saveUninitialized: false,
         resave: true,
         store: MongoStore.create({
