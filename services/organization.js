@@ -2,6 +2,7 @@ const {ERROR} = require("../constants/error-constants");
 const {USER} = require("../constants/user-constants");
 const {ORGANIZATION} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
+const {v4} = require("uuid");
 
 class Organization {
   constructor(organizationCollection, userCollection) {
@@ -183,6 +184,86 @@ class Organization {
         "$match": { name }
     }, {"$limit": 1}]);
     return result?.length > 0 ? result[0] : null;
+  }
+
+    /**
+     * Create an Organization API Interface.
+     *
+     * - `ADMIN` can call this API only
+     *
+     * @api
+     * @param {CreateOrganizationInput} params Endpoint parameters
+     * @param {{ cookie: Object, userInfo: Object }} context API request context
+     * @returns {Promise<Object>} The created organization
+    */
+  async createOrganizationAPI(params, context) {
+    if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
+      throw new Error(ERROR.NOT_LOGGED_IN);
+    }
+    if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+      throw new Error(ERROR.INVALID_ROLE);
+    }
+
+    return this.createOrganization(params);
+  }
+
+  /**
+   * Create a new Organization
+   *
+   * @async
+   * @typedef {{ name: string, conciergeID?: string, studies?: Object[] }} CreateOrganizationInput
+   * @throws {Error} If the organization name is already taken or the create action fails
+   * @param {CreateOrganizationInput} params The organization input
+   * @returns {Promise<Object>} The newly created organization
+   */
+  async createOrganization(params) {
+    const newOrg = {
+      _id: v4(),
+      name: "",
+      status: ORGANIZATION.STATUSES.ACTIVE,
+      conciergeID: "",
+      conciergeName: "",
+      conciergeEmail: "",
+      studies: [],
+      bucketName: null,
+      rootPath: null,
+      createdAt: getCurrentTime(),
+      updateAt: getCurrentTime(),
+    };
+
+    if (!!params?.name?.trim()) {
+        const existingOrg = await this.getOrganizationByName(params.name);
+        if (existingOrg) {
+            throw new Error(ERROR.DUPLICATE_ORG_NAME);
+        }
+        newOrg.name = params.name;
+    } else {
+        throw new Error(ERROR.INVALID_ORG_NAME);
+    }
+
+    if (!!params?.conciergeID) {
+        const filters = { _id: params.conciergeID, role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
+        const result = await this.userCollection.aggregate([{ "$match": filters }, { "$limit": 1 }]);
+        const conciergeUser = result?.[0];
+        if (!conciergeUser) {
+            throw new Error(ERROR.INVALID_ROLE_ASSIGNMENT);
+        }
+        newOrg.conciergeID = params.conciergeID;
+        newOrg.conciergeName = `${conciergeUser.firstName} ${conciergeUser.lastName}`.trim();
+        newOrg.conciergeEmail = conciergeUser.email;
+    }
+
+    if (params.studies && Array.isArray(params.studies)) {
+        // @ts-ignore Incorrect linting type assertion
+        newOrg.studies = params.studies;
+    }
+
+    const result = await this.organizationCollection.insert(newOrg);
+    if (!result?.acknowledged) {
+        throw new Error(ERROR.CREATE_FAILED);
+    }
+
+    return { ...newOrg };
   }
 }
 
