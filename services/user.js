@@ -18,7 +18,7 @@ const isValidUserStatus = (userStatus) => {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationService,config) {
+    constructor(userCollection, logCollection, organizationService, config) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationService = organizationService;
@@ -413,7 +413,7 @@ class User {
         //console.debug(userInfo, "User Info");
         this.isValidOrThrow([userInfo.email, userInfo.IDP]);
         const uuid = v4();
-        const accessToken = createToken({...userInfo, uuid}, this.config.token_secret, this.config.token_timeout);
+        const accessToken = createToken({...userInfo, uuid}, this.config.session_secret, this.config.token_timeout);
         //console.debug(accessToken, "Token");
         return {
             tokens: [accessToken],
