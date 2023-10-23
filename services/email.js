@@ -21,9 +21,9 @@ class EmailService {
         const html = await createEmailTemplate("notification-template.html", {
             message, ...templateParams
         });
-        to = this.asArray(to);
-        cc = this.asArray(cc);
-        bcc = this.asArray(bcc);
+        to = asArray(to);
+        cc = asArray(cc);
+        bcc = asArray(bcc);
 
         return await this.sendMail({ from, to, cc, bcc, subject, html });
     }
@@ -47,13 +47,12 @@ class EmailService {
             return true;
         }
     }
+}
 
-    asArray(values = []) {
-        return Array.isArray(values)
-            ? values
-            : [values];
-    }
-
+const asArray = (values = []) => {
+    return Array.isArray(values)
+        ? values
+        : [values];
 }
 
 module.exports = {EmailService}
