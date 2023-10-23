@@ -14,7 +14,7 @@ class EmailService {
             throw new Error('Missing recipient');
         }
 
-        if (!html) {
+        if (!message || !templateParams) {
             throw new Error('Missing HTML CONTENTS');
         }
 
