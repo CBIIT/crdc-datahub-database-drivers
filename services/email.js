@@ -1,4 +1,5 @@
 const { createTransport } = require('nodemailer');
+const {createEmailTemplate} = require("../lib/create-email-template");
 
 class EmailService {
 
@@ -7,7 +8,7 @@ class EmailService {
         this.emailsEnabled = emailsEnabled;
     }
 
-    async sendNotification(from, subject, html, to = [], cc = [], bcc = []) {
+    async sendNotification(from, subject, {message, templateParams}, to = [], cc = [], bcc = []) {
 
         if (!to?.length) {
             throw new Error('Missing recipient');
@@ -17,6 +18,9 @@ class EmailService {
             throw new Error('Missing HTML CONTENTS');
         }
 
+        const html = await createEmailTemplate("notification-template.html", {
+            message, ...templateParams
+        });
         to = this.asArray(to);
         cc = this.asArray(cc);
         bcc = this.asArray(bcc);
