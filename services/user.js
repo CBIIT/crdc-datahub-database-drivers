@@ -44,7 +44,7 @@ class User {
         if(context?.userInfo?.tokens){
             context.userInfo.tokens = []
         }
-        const accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout);
+        const accessToken = createToken(context?.userInfo, config.token_secret, config.token_timeout);
         await this.linkTokentoUser(context, accessToken);
         return {
             tokens: [accessToken],
