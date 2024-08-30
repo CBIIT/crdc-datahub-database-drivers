@@ -4,10 +4,10 @@ const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events"
 
 
 const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
-const {v4} = require("uuid");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
 const {LOG_COLLECTION} = require("../database-constants");
+const orgToUserOrg = require("../utility/org-to-userOrg-converter");
 
 
 
@@ -28,7 +28,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier, organizationService) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -37,7 +37,6 @@ class User {
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
         this.tier = tier;
-        this.organizationService = organizationService;
     }
 
     async grantToken(params, context){
@@ -210,65 +209,6 @@ class User {
         return result;
     }
 
-    async createNewUser(context) {
-        let sessionCurrentTime = getCurrentTime();
-        let email = context.userInfo.email;
-        let emailName = email.split("@")[0];
-        const newUser = {
-            _id: v4(),
-            email: email,
-            IDP: context.userInfo.IDP,
-            userStatus: USER.STATUSES.ACTIVE,
-            role: USER.ROLES.USER,
-            organization: {},
-            dataCommons: [],
-            firstName: context?.userInfo?.firstName || emailName,
-            lastName: context.userInfo.lastName,
-            createdAt: sessionCurrentTime,
-            updateAt: sessionCurrentTime
-        };
-        const result = await this.userCollection.insert(newUser);
-        if (!result?.acknowledged){
-            let error = "An error occurred while creating a new user";
-            console.error(error)
-            throw new Error(error)
-        }
-        return newUser;
-    }
-
-    async getMyUser(params, context) {
-        isLoggedInOrThrow(context);
-        let result = await this.userCollection.aggregate([
-            {
-                "$match": {
-                    email: context.userInfo.email,
-                    IDP: context.userInfo.IDP,
-                }
-            },
-            {"$sort": {createdAt: -1}}, // sort descending
-            {"$limit": 1} // return one
-        ]);
-        if (!result){
-            let error = "there is an error getting the result";
-            console.error(error)
-            throw new Error(error)
-        }
-        let user =  result[0];
-        if (!user){
-            user = await this.createNewUser(context);
-        }
-
-        if (user?.organization?.orgID) {
-            const aOrg = await this.organizationService.getOrganizationByID(user?.organization?.orgID);
-            user.organization = UserOrganization.create(aOrg._id, aOrg.name, aOrg.status, aOrg.createdAt, aOrg.updateAt);
-        }
-        context.userInfo = {
-            ...context.userInfo,
-            ...user
-        }
-        return context.userInfo;
-    }
-
     async updateMyUser(params, context) {
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
@@ -359,7 +299,7 @@ class User {
                 throw new Error(ERROR.INVALID_ORG_ID);
             }
 
-            updatedUser.organization = UserOrganization.create(newOrg._id, newOrg.name, newOrg.status, newOrg.createdAt, newOrg.updateAt);
+            updatedUser.organization = orgToUserOrg(newOrg);
         } else if (typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
         }
@@ -702,19 +642,6 @@ class User {
             }
         });
         return await this.userCollection.aggregate(pipeline);
-    }
-}
-
-class UserOrganization {
-    constructor(id, name, status, createdAt, updateAt) {
-        this.orgID = id;
-        this.orgName = name;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.updateAt = updateAt;
-    }
-    static create(id, name, status, createdAt, updateAt) {
-        return new UserOrganization(id, name, status, createdAt, updateAt);
     }
 }
 
