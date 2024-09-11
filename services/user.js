@@ -112,7 +112,7 @@ class User {
         isLoggedInOrThrow(context);
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo?.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
-        };
+        }
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
             throw new Error(ERROR.NO_ORG_ASSIGNED);
         }
@@ -145,7 +145,7 @@ class User {
         }
         if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
             throw new Error(ERROR.INVALID_ROLE);
-        };
+        }
 
         const curators = await this.getActiveCurators();
         return curators?.map((user) => ({
@@ -291,7 +291,6 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
-        let userOrg = null;
         if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
             const result = await this.organizationCollection.aggregate([{
                 "$match": { _id: params.organization }
@@ -422,7 +421,7 @@ class User {
     /**
      * Disable users matching specific user conditions.
      *
-     * @param {Array} users - An array of user conditions for $or.
+     * @param {Array} inactiveUsers - An array of user conditions for $or.
      * @returns {Promise<Array>} - An array of user aggregation result.
      */
     // search by user's email and idp
@@ -434,98 +433,6 @@ class User {
             return await this.userCollection.aggregate([{"$match": query}]) || [];
         }
         return [];
-    }
-
-    async checkForInactiveUsers(qualifyingEvents) {
-        const USER_FIELDS = {
-            ID: "_id",
-            FIRST_NAME: "firstName",
-            EMAIL: "email",
-            IDP: "IDP",
-            STATUS: "userStatus"
-        };
-        const LOGS_FIELDS = {
-            EMAIL: "userEmail",
-            IDP: "userIDP",
-            EVENT_TYPE: "eventType",
-            TIMESTAMP: "timestamp"
-        };
-        const LOGS_ARRAY = "log_events_array";
-        const LATEST_LOG = "latest_log_event";
-
-        let pipeline = [];
-        pipeline.push({
-            $match: {
-                [USER_FIELDS.STATUS]: USER.STATUSES.ACTIVE
-            }
-        });
-        pipeline.push({
-            $lookup: {
-                from: LOG_COLLECTION,
-                localField: USER_FIELDS.EMAIL,
-                foreignField: LOGS_FIELDS.EMAIL,
-                as: LOGS_ARRAY
-            }
-        });
-        pipeline.push({
-            $set: {
-                [LOGS_ARRAY]: {
-                    $filter: {
-                        input: "$" + LOGS_ARRAY,
-                        as: "log",
-                        cond: {
-                            $and: [
-                                {
-                                    $eq: ["$$log." + LOGS_FIELDS.IDP, "$" + USER_FIELDS.IDP],
-                                },
-                                {
-                                    $in: ["$$log." + LOGS_FIELDS.EVENT_TYPE, qualifyingEvents]
-                                },
-                            ],
-                        }
-                    }
-                }
-            }
-        });
-        pipeline.push({
-            $set: {
-                [LATEST_LOG]: {
-                    $first: {
-                        $sortArray: {
-                            input: "$" + LOGS_ARRAY,
-                            sortBy: {
-                                timestamp: -1
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        pipeline.push({
-            $match: {
-                $or: [
-                    {
-                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
-                            $exists: 0
-                        }
-                    },
-                    {
-                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
-                            $lt: subtractDaysFromNowTimestamp(config.inactive_user_days)
-                        }
-                    },
-                ]
-            }
-        });
-        pipeline.push({
-            $project: {
-                [USER_FIELDS.ID]: 1,
-                [USER_FIELDS.EMAIL]: 1,
-                [USER_FIELDS.IDP]: 1,
-                [USER_FIELDS.FIRST_NAME]: 1,
-            }
-        });
-        return await this.userCollection.aggregate(pipeline);
     }
 
     /**
@@ -574,10 +481,11 @@ class User {
      * getFederalMonitors
      * @returns {Promise<Array>} user[]
      */
-    async getFederalMonitors() {
+    async getFederalMonitors(studyID) {
         const query= {
             "userStatus": USER.STATUSES.ACTIVE,
-            "role": USER.ROLES.FEDERAL_MONITOR
+            "role": USER.ROLES.FEDERAL_MONITOR,
+            "studies": {$in: studyID}
         };
         return await this.userCollection.aggregate([{"$match": query}]);
     }
