@@ -288,21 +288,19 @@ class Organization {
   * Stores approved studies in the organization's collection.
   *
   * @param {string} orgID - The organization ID.
-   * @param {object} approvedStudies - The approved study array.
+   * @param {object} orgApprovedStudy - The approved study array.
   * @returns {void}
   */
-  async storeApprovedStudies(orgID, approvedStudies) {
+  async storeApprovedStudies(orgID, orgApprovedStudy) {
       const aOrg = await this.getOrganizationByID(orgID);
       if (!aOrg) {
           return;
       }
       const newStudies = [];
-      approvedStudies.forEach(approvedStudy => {
-          const matchingStudy = aOrg?.studies.find((study) => approvedStudy?._id === study?._id);
-          if (!matchingStudy) {
-              newStudies.push(approvedStudy);
-          }
-      });
+      const matchingStudy = aOrg?.studies.find((study) => orgApprovedStudy?._id === study?._id);
+      if (!matchingStudy) {
+          newStudies.push(orgApprovedStudy);
+      }
 
       if (newStudies.length > 0) {
           aOrg.studies = aOrg.studies || [];
