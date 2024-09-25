@@ -312,6 +312,17 @@ class Organization {
           }
       }
   }
+
+    /**
+     * List Organization IDs by a studyName API.
+     * @api
+     * @param {string} studyID
+     * @returns {Promise<String[]>} An array of Organization ID
+     */
+    async findByStudyID(studyID) {
+        return await this.organizationCollection.distinct("_id", {"studies._id": studyID});
+    }
+
     /**
      * Retrieves approved studies in the approved studies collection.
      *

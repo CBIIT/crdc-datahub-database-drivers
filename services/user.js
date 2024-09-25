@@ -85,14 +85,15 @@ class User {
     }
 
     /**
-     * Retrieves user documents from the userCollection by matching multiple user IDs.
-     * @param {Array} userIDs - An array of user IDs
+     * Retrieves user documents from the userCollection by matching multiple organization IDs.
+     * @param {Array} organizationIDs - An array of organization IDs
      * @returns {Array} - An array of user documents.
      */
-    async getUsersByIDs(userIDs) {
+    async getUsersByOrganizationIDs(organizationIDs) {
         const result = await this.userCollection.aggregate([{
             "$match": {
-                _id: { "$in": userIDs } // userIDs should be an array of IDs
+                userStatus: USER.STATUSES.ACTIVE,
+                "organization.orgID": { "$in": organizationIDs } // userIDs should be an array of IDs
             }
         }]);
         return (result?.length > 0) ? result : [];
