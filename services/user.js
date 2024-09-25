@@ -498,6 +498,7 @@ class User {
 
     /**
      * getFederalMonitors
+     * @param {*} studyID
      * @returns {Promise<Array>} user[]
      */
     async getFederalMonitors(studyID) {
@@ -505,6 +506,20 @@ class User {
             "userStatus": USER.STATUSES.ACTIVE,
             "role": USER.ROLES.FEDERAL_MONITOR,
             "studies": {$in: [studyID]}
+        };
+        return await this.userCollection.aggregate([{"$match": query}]);
+    }
+
+    /**
+     * getCurators
+     * @param {*} dataCommons
+     * @returns {Promise<Array>} user[]
+     */
+    async getCurators(dataCommons) {
+        const query= {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "role": USER.ROLES.CURATOR,
+            "dataCommons": {$in: Array.isArray(dataCommons) ? dataCommons : [dataCommons]}
         };
         return await this.userCollection.aggregate([{"$match": query}]);
     }
