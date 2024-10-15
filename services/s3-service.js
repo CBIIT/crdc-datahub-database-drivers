@@ -110,13 +110,36 @@ class S3Service {
      * @param {string} dir - The prefix of the files to list.
      * @returns {Promise<Object>} A promise that resolves with the list of objects if successful, or rejects with an error.
      */
-    async listFileInDir(bucket, dir) {
+    async listFileInDir(bucketName, dir) {
         const listParams = {
-            Bucket: bucket,
-            Prefix: (dir.endsWith("/"))? dir : dir + "/"
+            Bucket: bucketName,
+            Prefix: (dir.endsWith("/")) ? dir : dir + "/"
         };
+
+        let fileObjects = [];
+        const listRecursively = async (params) => {
+            try {
+                const data = await this.#listObjectsV2(params);
+                if (data.Contents) {
+                    fileObjects.push(...data.Contents);
+                    if (data.IsTruncated) {  // If more objects are available, continue with the next token
+                        params.ContinuationToken = data.NextContinuationToken;
+                        await listRecursively(params);
+                    }
+                }
+            } catch (err) {
+                console.error(`Failed to listing files from bucket "${bucketName}": ${err.toString()}`);
+                throw err;
+            }
+        };
+
+        await listRecursively(listParams);  // Start recursive listing
+        return fileObjects;
+    }
+
+    async #listObjectsV2(params) {
         return new Promise((resolve, reject) => {
-            this.s3.listObjectsV2(listParams, (err, data) => {
+            this.s3.listObjectsV2(params, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
