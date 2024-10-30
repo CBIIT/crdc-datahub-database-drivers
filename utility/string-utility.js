@@ -8,9 +8,14 @@ const parseJsonString = (jsonString) => {
     }
 };
 
+const isUndefined = (p) => {
+    return p === undefined;
+}
+
 const includesAll = (arr, values) => values.every(v => arr.includes(v));
 
 module.exports = {
     parseJsonString, 
-    includesAll
+    includesAll,
+    isUndefined
 }
