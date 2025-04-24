@@ -1,6 +1,6 @@
 const {ERROR} = require("../constants/error-constants");
 const {USER} = require("../constants/user-constants");
-const {ORGANIZATION} = require("../constants/organization-constants");
+const {ORGANIZATION, NA_PROGRAM} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
 const { APPROVED_STUDIES_COLLECTION } = require("../database-constants");
 const {ADMIN} = require("../constants/user-permission-constants");
@@ -163,9 +163,9 @@ class Organization {
       if (!currentOrg?.abbreviation && !params?.abbreviation?.trim()) {
           throw new Error(ERROR.ORGANIZATION_INVALID_ABBREVIATION);
       }
-
+      let existingOrg = null;
       if (params.name && params.name !== currentOrg.name) {
-          const existingOrg = await this.getOrganizationByName(params.name);
+          existingOrg = await this.getOrganizationByName(params.name);
           if (existingOrg) {
               throw new Error(ERROR.DUPLICATE_ORG_NAME);
           }
@@ -255,7 +255,29 @@ class Organization {
               console.error("Failed to update the organization name in submission requests");
           }
       }
+        //   check if existing studies in the organization are removed
+      await this.#checkRemovedStudies(existingOrg.studies, updatedOrg.studies);
       return { ...currentOrg, ...updatedOrg };
+  }
+
+  /**
+   * #checkRemovedStudies: private method to check removed studies
+   * @param {*} existing_studies 
+   * @param {*} updated_studies 
+   */
+  async #checkRemovedStudies(existing_studies, updated_studies){
+    const existing_study_ids = existing_studies.map(study => study._id);
+    const updated_study_ids = updated_studies.map(study => study._id);
+    const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
+    for (let studyID of removed_studies_ids) {
+        const organization = await this.findOneByStudyID(studyID);
+        if (!organization) {
+            const org = await this.organizationService.getOrganizationByName(NA_PROGRAM);
+            if (org && org?._id) {
+                await this.organizationService.storeApprovedStudies(org._id, studyID);
+            }
+        }
+    }
   }
 
   // If data concierge is not available in the submission,
