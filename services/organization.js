@@ -163,9 +163,9 @@ class Organization {
       if (!currentOrg?.abbreviation && !params?.abbreviation?.trim()) {
           throw new Error(ERROR.ORGANIZATION_INVALID_ABBREVIATION);
       }
-      let existingOrg = null;
+
       if (params.name && params.name !== currentOrg.name) {
-          existingOrg = await this.getOrganizationByName(params.name);
+          const existingOrg = await this.getOrganizationByName(params.name);
           if (existingOrg) {
               throw new Error(ERROR.DUPLICATE_ORG_NAME);
           }
@@ -256,7 +256,7 @@ class Organization {
           }
       }
         //   check if existing studies in the organization are removed
-      await this.#checkRemovedStudies(existingOrg.studies, updatedOrg.studies);
+      await this.#checkRemovedStudies(currentOrg.studies, updatedOrg.studies);
       return { ...currentOrg, ...updatedOrg };
   }
 
@@ -271,10 +271,10 @@ class Organization {
     const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
     for (let studyID of removed_studies_ids) {
         const organization = await this.findOneByStudyID(studyID);
-        if (!organization) {
-            const org = await this.organizationService.getOrganizationByName(NA_PROGRAM);
+        if (organization.length == 0) {
+            const org = await this.getOrganizationByName(NA_PROGRAM);
             if (org && org?._id) {
-                await this.organizationService.storeApprovedStudies(org._id, studyID);
+                await this.storeApprovedStudies(org._id, studyID);
             }
         }
     }
