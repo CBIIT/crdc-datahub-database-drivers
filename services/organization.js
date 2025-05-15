@@ -268,15 +268,23 @@ class Organization {
   async #checkRemovedStudies(existing_studies, updated_studies){
     const existing_study_ids = existing_studies.map(study => study._id);
     const updated_study_ids = updated_studies.map(study => study._id);
-    const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
+    const removed_studies_ids = existing_study_ids.filter(study_id => updated_study_ids.includes(study_id));
+    const naOrg = await this.getOrganizationByName(NA_PROGRAM);
+    if (!naOrg || !naOrg?._id) {
+      console.error("NA program not found");
+      return
+    }
     for (let studyID of removed_studies_ids) {
         const organization = await this.findOneByStudyID(studyID);
         if (organization.length == 0) {
-            const org = await this.getOrganizationByName(NA_PROGRAM);
-            if (org && org?._id) {
-                await this.storeApprovedStudies(org._id, studyID);
-            }
+            await this.storeApprovedStudies(org._id, studyID);
         }
+    }
+    const naOrgStudies = naOrg.studies;
+    // remove updated studyID from NA program since they are added to the edited org.
+    const filteredStudies = naOrgStudies.filter(study => !removed_studies_ids.includes(study._id));
+    if (filteredStudies.length !== naOrgStudies.length) {
+      await this.organizationCollection.updateOne({"_id": naOrg._id}, {"studies": filteredStudies, "updateAt": getCurrentTime()});
     }
   }
 
