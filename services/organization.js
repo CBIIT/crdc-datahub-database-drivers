@@ -318,7 +318,6 @@ class Organization {
 
     if (existing_studies && existing_studies.length > 0) {
       const existing_study_ids = existing_studies.map(study => study._id);
-      
       const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
       if (removed_studies_ids.length > 0) {
         // add removed studyID back to NA program
