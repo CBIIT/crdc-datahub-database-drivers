@@ -320,8 +320,13 @@ class Organization {
       const existing_study_ids = existing_studies.map(study => study._id);
       const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
       if (removed_studies_ids.length > 0) {
-        // add removed studyID back to NA program
-        filteredStudies.push(...removed_studies_ids.map(study_id => ({_id: study_id})));
+        for (let studyID of removed_studies_ids) {
+          const organization = await this.findOneByStudyID(studyID);
+          if (organization.length == 0) {
+              // add removed studyID back to NA program
+              filteredStudies.push({_id: studyID});
+          }
+        }
       }
     }
     await this.organizationCollection.updateOne({"_id": naOrg._id}, {"studies": filteredStudies, "updateAt": getCurrentTime()});
