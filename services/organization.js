@@ -303,26 +303,29 @@ class Organization {
    * @param {*} updated_studies 
    */
   async #checkRemovedStudies(existing_studies, updated_studies){
-    const existing_study_ids = existing_studies.map(study => study._id);
+    if (!updated_studies || updated_studies.length === 0) {
+      return;
+    }
     const updated_study_ids = updated_studies.map(study => study._id);
-    const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
     const naOrg = await this.getOrganizationByName(NA_PROGRAM);
     if (!naOrg || !naOrg?._id) {
       console.error("NA program not found");
       return
     }
-    for (let studyID of removed_studies_ids) {
-        const organization = await this.findOneByStudyID(studyID);
-        if (organization.length == 0) {
-            await this.storeApprovedStudies(naOrg._id, studyID);
-        }
-    }
     const naOrgStudies = naOrg.studies;
     // remove updated studyID from NA program since they are added to the edited org.
     const filteredStudies = naOrgStudies.filter(study => !updated_study_ids.includes(study._id));
-    if (filteredStudies.length !== naOrgStudies.length) {
-      await this.organizationCollection.updateOne({"_id": naOrg._id}, {"studies": filteredStudies, "updateAt": getCurrentTime()});
+
+    if (existing_studies && existing_studies.length > 0) {
+      const existing_study_ids = existing_studies.map(study => study._id);
+      
+      const removed_studies_ids = existing_study_ids.filter(study_id => !updated_study_ids.includes(study_id));
+      if (removed_studies_ids.length > 0) {
+        // add removed studyID back to NA program
+        filteredStudies.push(...removed_studies_ids.map(study_id => ({_id: study_id})));
+      }
     }
+    await this.organizationCollection.updateOne({"_id": naOrg._id}, {"studies": filteredStudies, "updateAt": getCurrentTime()});
   }
 
   // If data concierge is not available in the submission,
@@ -470,7 +473,7 @@ class Organization {
     if (!res?.value) {
       throw new Error(ERROR.CREATE_FAILED);
     }
-
+    await this.#checkRemovedStudies(null, newOrg.studies);
     return res?.value;
   }
 
