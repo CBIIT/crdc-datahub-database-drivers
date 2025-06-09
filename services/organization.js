@@ -313,9 +313,10 @@ class Organization {
       return
     }
     const naOrgStudies = naOrg.studies;
+    let changed = false;
     // remove updated studyID from NA program since they are added to the edited org.
     const filteredStudies = naOrgStudies.filter(study => !updatedStudyIds.includes(study._id));
-
+    changed = (filteredStudies.length !== naOrgStudies.length);
     if (existingStudies && existingStudies.length > 0) {
       const existingStudyIds = existingStudies.map(study => study._id);
       const removedStudiesIds = existingStudyIds.filter(study_id => !updatedStudyIds.includes(study_id));
@@ -324,10 +325,14 @@ class Organization {
           const organization = await this.findOneByStudyID(studyID);
           if (organization.length == 0) {
               // add removed studyID back to NA program
+              changed = true;
               filteredStudies.push({_id: studyID});
           }
         }
       }
+    }
+    if (!changed) {
+      return;
     }
     await this.organizationCollection.updateOne({"_id": naOrg._id}, {"studies": filteredStudies, "updateAt": getCurrentTime()});
   }
