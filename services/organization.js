@@ -251,19 +251,6 @@ class Organization {
 
     if (updatedOrg.name || updatedOrg?.abbreviation) {
       const promises = [];
-      const submissionUpdateCondition = {"organization._id": orgID, $or: [
-          updatedOrg.name ? {"organization.name": {"$ne": updatedOrg.name}} : {},
-          updatedOrg?.abbreviation? {"organization.abbreviation": {"$ne": updatedOrg.abbreviation}} : {}
-        ]}
-      promises.push(
-          this.submissionCollection.updateMany(
-              submissionUpdateCondition,
-              {
-                ...(updatedOrg.name ? {"organization.name": updatedOrg.name} : {}),
-                ...(updatedOrg.abbreviation ? {"organization.abbreviation": updatedOrg.abbreviation} : {}),
-                updatedAt: getCurrentTime()}
-          )
-      );
       if (updatedOrg.name) {
         promises.push(
             this.userCollection.updateMany(
