@@ -1,6 +1,6 @@
 module.exports = Object.freeze({
     // MongoDB Collections
-    DATABASE_NAME: process.env.DATABASE_NAME || 'crdc-datahub',
+    DATABASE_NAME: process.env.DATABASE_NAME || 'crdc-datahub2',
     SESSION_COLLECTION: 'sessions',
     APPLICATION_COLLECTION: 'applications',
     SUBMISSIONS_COLLECTION: 'submissions',
