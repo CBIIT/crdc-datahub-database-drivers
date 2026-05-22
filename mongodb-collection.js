@@ -1,3 +1,4 @@
+const {v4} = require("uuid");
 const DATABASE_ERROR = new Error("Database operation failed, please see logs for more information");
 class MongoDBCollection {
 
@@ -8,6 +9,15 @@ class MongoDBCollection {
     async find(id){
         try{
             return await this.collection.find({_id: id}).toArray();
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a find operation", e);
+        }
+    }
+
+    async findOne(id){
+        try{
+            return await this.collection.findOne({_id: id});
         }
         catch (e){
             logAndThrow("An exception occurred during a find operation", e);
@@ -67,7 +77,8 @@ class MongoDBCollection {
 
     async findOneAndUpdate(query, doc, option) {
         const updateDoc = {
-            $set: doc
+            $set: doc,
+            $setOnInsert: { _id: v4() }
         };
         try{
             return await this.collection.findOneAndUpdate(query, updateDoc, option ? option : { upsert: true});
@@ -94,10 +105,10 @@ class MongoDBCollection {
     }
 
     async updateMany(query, document, option) {
-        const updateDoc = {
-            $set: document,
-            ...option
-        };
+        const updateDoc = Array.isArray(document)
+            ? document
+            : { $set: document, ...option };
+
         try{
             return await this.collection.updateMany(query, updateDoc);
         }
@@ -151,6 +162,26 @@ class MongoDBCollection {
             return await this.collection.distinct(field, filter);
         }
         catch (e){
+            logAndThrow("An exception occurred during a distinct operation", e);
+        }
+    }
+
+    /**
+     * Performs a bulk write operation.
+     * Allows multiple update operations in a single request, improving efficiency.
+     *
+     * @param {Array} operations - An array of bulk write operations, such as updateOne or updateMany.
+     * @returns {Promise<Object>} A promise that resolves to the result of the bulk write operation,
+     *
+     * @example
+     * const operations = [
+     *   { updateOne: { filter: { _id: 1 }, update: { $set: { name: "CRDC", status: "Active" } } } }
+     * ];
+     */
+    async bulkWrite(operations){
+        try {
+            return await this.collection.bulkWrite(operations);
+        } catch (e){
             logAndThrow("An exception occurred during a distinct operation", e);
         }
     }

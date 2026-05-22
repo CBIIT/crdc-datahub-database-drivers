@@ -9,5 +9,8 @@ module.exports = Object.freeze({
     UPDATE_APPLICATION_STATE: 'Update_Application_State',
     CREATE_BATCH: 'Create_Batch',
     UPDATE_BATCH: 'Update_Batch',
-    SUBMISSION_ACTION: 'Submission_Action'
+    SUBMISSION_ACTION: 'Submission_Action',
+    EDIT_SUBMISSION_NAME: 'Edit_Submission_Name',
+    EDIT_SUBMISSION_CONFIGURATION: 'Edit_Submission_Configuration',
+    DELETE_DATA: 'Delete_Data'
 });

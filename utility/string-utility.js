@@ -8,6 +8,14 @@ const parseJsonString = (jsonString) => {
     }
 };
 
+const isTrue = (value) => {
+    return String(value)?.toLowerCase() === 'true'
+}
+
+const includesAll = (arr, values) => values.every(v => arr.includes(v));
+
 module.exports = {
-    parseJsonString
+    parseJsonString, 
+    includesAll,
+    isTrue
 }

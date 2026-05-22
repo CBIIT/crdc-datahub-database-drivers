@@ -1,10 +1,10 @@
 const {getCurrentTime} = require("../utility/time-utility");
-const {v4} = require("uuid");
-const {isUndefined} = require("../../utility/string-util");
+const {isTrue} = require("../utility/string-utility");
+const { APPROVED_STUDY_STATUS } = require("../constants/approved-study-constants");
+
 
 class ApprovedStudies {
-    constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess) {
-        this._id = v4();
+    constructor(applicationID, studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess, useProgramPC, pendingModelChange, primaryContactID, pendingGPA, programID, pendingImageDeIdentification) {
         this.studyName = studyName;
         this.studyAbbreviation = studyAbbreviation;
         if (dbGaPID) {
@@ -14,16 +14,41 @@ class ApprovedStudies {
         if (organizationName) {
             this.originalOrg = organizationName;
         }
-
-        if (!isUndefined(controlledAccess)) {
-            this.controlledAccess = controlledAccess;
+        if (ORCID) {
+            this.ORCID = ORCID;
         }
+
+        this.controlledAccess = isTrue(controlledAccess);
+
+        if (PI) {
+            this.PI = PI;
+        }
+
+        this.openAccess = isTrue(openAccess);
+        this.status = APPROVED_STUDY_STATUS.ACTIVE;
         this.createdAt = this.updatedAt = getCurrentTime();
+        this.useProgramPC = isTrue(useProgramPC);
+        this.pendingModelChange = isTrue(pendingModelChange ?? true);
+        if (applicationID) {
+            this.applicationID = applicationID
+        }
+
+        if (primaryContactID) {
+            this.primaryContactID = primaryContactID;
+        }
+
+        if (pendingGPA?.GPAName) {
+            this.GPAName = pendingGPA?.GPAName;
+        }
+
+        this.isPendingGPA = isTrue(pendingGPA?.isPendingGPA && this.controlledAccess);
+        this.programID = programID;
+        this.pendingImageDeIdentification = isTrue(pendingImageDeIdentification ?? false);
     }
 
-    static createApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess) {
-        return new ApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess);
-    }
+        static createApprovedStudies(applicationID, studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess, useProgramPC, pendingModelChange, primaryContactID, pendingGPA, programID, pendingImageDeIdentification) {
+            return new ApprovedStudies(applicationID, studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess, useProgramPC, pendingModelChange, primaryContactID, pendingGPA, programID, pendingImageDeIdentification);
+        }
 }
 
 module.exports = {

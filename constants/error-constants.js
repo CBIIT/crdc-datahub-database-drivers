@@ -12,7 +12,7 @@ module.exports = Object.freeze({
         CREATE_FAILED: "Unknown error occurred while creating object",
         INVALID_ROLE_ASSIGNMENT: "The role you are trying to assign is invalid",
         USER_ORG_REQUIRED: "An organization is required for this user role",
-        USER_DC_REQUIRED: "One or more Data Commons are required for this user role",
+        USER_DC_REQUIRED: "At least one Data Commons is required for this user role.",
         MONGODB_HEALTH_CHECK_FAILED: "The MongoDB health check failed, please see the logs for more information",
         // Utility
         JSON_PARSING: "An error occurred while parsing a string to JSON.",
@@ -23,5 +23,17 @@ module.exports = Object.freeze({
         DUPLICATE_ORG_NAME: "An organization with the same name already exists",
         INVALID_ORG_NAME: "The organization name you provided is invalid",
         NO_SUBMISSION_BUCKET: "Unable to create organization, no submission bucket is configured",
+        INVALID_NO_STUDIES: "The user's organization has no approved studies.",
+        INVALID_NOT_APPROVED_STUDIES:  "Parameter studies contain studies are not approved.",
+        ORGANIZATION_INVALID_ABBREVIATION: "Abbreviation is required for the organization.",
+        APPROVED_STUDIES_REQUIRED: "Approved studies are required for the user with the role",
+        INVALID_PROGRAM_STATUS: "Requested organization status $item$ is not valid.",
+        CANNOT_UPDATE_READ_ONLY_PROGRAM: "This program is read only and cannot be updated or deactivated.",
+        UPDATE_FAILED_STUDY_IDS_NOT_EXIST: "Update failed, these provided study IDs do not exist",
+        NOT_ALL_STUDIES_UPDATED: "Not all studies were updated successfully, please see the logs for additional information.",
+        PROGRAM_CANNOT_INACTIVATE_WITH_STUDIES: "This program has assigned studies, all studies must be reassigned before it can be set to inactive.",
+        STUDIES_CANNOT_ASSIGN_TO_INACTIVE_PROGRAM: "Studies cannot be assigned to an inactive program.",
+        INVALID_INCLUDE_STUDIES_LIST_ARGUMENT:
+            "A boolean is required for the include-studies option when loading an organization by ID.",
     },
 });
